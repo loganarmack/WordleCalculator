@@ -88,7 +88,10 @@ def find_eliminated_words(colours, word, all_words):
             # Yellow letter:
             elif colours[index] == 'y':
                 # No duplicates, so must contain exactly one
-                if potential_word.count(letter) != 1:
+                if potential_word.count(letter) < 1:
+                    eliminated_words.add(potential_word)
+                    break
+                elif potential_word[index] == letter:
                     eliminated_words.add(potential_word)
                     break
         # Black letter
@@ -98,7 +101,75 @@ def find_eliminated_words(colours, word, all_words):
                     eliminated_words.add(potential_word)
                     break
 
-    return len(eliminated_words)
+    return eliminated_words
+
+
+def gen_best_words(guesses, solutions):
+    NUM_WORDS = len(solutions)
+    output = {}
+    for word in guesses:
+        guess_values = {}
+        for target_word in solutions:
+            colours = colour_word(word, target_word)
+            if guess_values.get(colours):
+                guess_values[colours]["freq"] += 1
+            else:
+                guess_values[colours] = {
+                    "freq": 1,
+                    "score": len(find_eliminated_words(colours, word, solutions))
+                }
+
+        avg_eliminated = 0
+        for key in guess_values:
+            avg_eliminated += (guess_values[key]["freq"] /
+                               NUM_WORDS) * guess_values[key]["score"]
+
+        output[word] = avg_eliminated
+
+    print(output)
+
+    with open("best_words.txt", "w") as f:
+        for key in {k: v for k, v in sorted(output.items(), key=lambda x: x[1], reverse=True)}:
+            f.write(f"{key}: {output[key]}\n")
+
+
+def play_for_me(guesses, solutions):
+    while True:
+        last_word = input("What's the last word you entered? ").lower()
+        last_colours = input("What colours did you get? ").lower()
+        remaining = solutions.copy()
+        if last_colours == "ggggg":
+            break
+        else:
+            eliminated = find_eliminated_words(
+                last_colours, last_word, remaining)
+            remaining = [w for w in solutions if w not in eliminated]
+            print(f"Remaining words: {remaining}")
+            num_words = len(remaining)
+            best_word = ""
+            best_eliminated = 0
+            for word in guesses:
+                guess_values = {}
+                for target_word in remaining:
+                    colours = colour_word(word, target_word)
+                    if guess_values.get(colours):
+                        guess_values[colours]["freq"] += 1
+                    else:
+                        guess_values[colours] = {
+                            "freq": 1,
+                            "score": len(find_eliminated_words(colours, word, solutions))
+                        }
+
+                avg_eliminated = 0
+                for key in guess_values:
+                    avg_eliminated += (guess_values[key]["freq"] /
+                                       num_words) * guess_values[key]["score"]
+
+                if avg_eliminated > best_eliminated:
+                    best_word = word
+                    best_eliminated = avg_eliminated
+
+            print(f"Best continuation guess: {best_word}")
 
 
 guess_file = open("guesses.txt", "r")
@@ -109,33 +180,4 @@ solution_file = open("solutions.txt", "r")
 solutions = solution_file.read().splitlines()
 solution_file.close()
 
-
-NUM_WORDS = len(guesses)
-print(NUM_WORDS)
-
-max_eliminated = 0
-best_word = None
-for word in guesses:
-    guess_values = {}
-    for target_word in solutions:
-        colours = colour_word(word, target_word)
-        if guess_values.get(colours):
-            guess_values[colours]["freq"] += 1
-        else:
-            guess_values[colours] = {
-                "freq": 1,
-                "score": find_eliminated_words(colours, word, solutions)
-            }
-
-    avg_eliminated = 0
-    for key in guess_values:
-        avg_eliminated += (guess_values[key]["freq"] /
-                           NUM_WORDS) * guess_values[key]["score"]
-
-    if avg_eliminated > max_eliminated:
-        max_eliminated = avg_eliminated
-        best_word = word
-
-    print(f"{word}: {avg_eliminated}")
-
-print(best_word)
+play_for_me(guesses, solutions)
