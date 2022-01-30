@@ -134,16 +134,16 @@ def gen_best_words(guesses, solutions):
 
 
 def play_for_me(guesses, solutions):
+    remaining = solutions.copy()
     while True:
         last_word = input("What's the last word you entered? ").lower()
         last_colours = input("What colours did you get? ").lower()
-        remaining = solutions.copy()
         if last_colours == "ggggg":
             break
         else:
             eliminated = find_eliminated_words(
                 last_colours, last_word, remaining)
-            remaining = [w for w in solutions if w not in eliminated]
+            remaining = [w for w in remaining if w not in eliminated]
             print(f"Remaining words: {remaining}")
             num_words = len(remaining)
             best_word = ""
@@ -157,7 +157,7 @@ def play_for_me(guesses, solutions):
                     else:
                         guess_values[colours] = {
                             "freq": 1,
-                            "score": len(find_eliminated_words(colours, word, solutions))
+                            "score": len(find_eliminated_words(colours, word, remaining))
                         }
 
                 avg_eliminated = 0
@@ -172,6 +172,20 @@ def play_for_me(guesses, solutions):
             print(f"Best continuation guess: {best_word}")
 
 
+def show_remaining_words(solutions):
+    remaining = solutions.copy()
+    while True:
+        last_word = input("What's the last word you entered? ").lower()
+        last_colours = input("What colours did you get? ").lower()
+        if last_colours == "ggggg":
+            break
+        else:
+            eliminated = find_eliminated_words(
+                last_colours, last_word, remaining)
+            remaining = [w for w in remaining if w not in eliminated]
+            print(f"Remaining words: {remaining}")
+
+
 guess_file = open("guesses.txt", "r")
 guesses = guess_file.read().splitlines()
 guess_file.close()
@@ -181,3 +195,4 @@ solutions = solution_file.read().splitlines()
 solution_file.close()
 
 play_for_me(guesses, solutions)
+# show_remaining_words(solutions)

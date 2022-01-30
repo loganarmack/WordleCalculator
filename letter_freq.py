@@ -1,4 +1,4 @@
-with open("5_letter_words.txt", "r") as f:
+with open("solutions.txt", "r") as f:
     all_words = f.read().splitlines()
 
     freq = {0: {}, 1: {}, 2: {}, 3: {}, 4: {}}
